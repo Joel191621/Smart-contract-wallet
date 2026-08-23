@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Production build outputs
+dist/
+dist-ssr/
+*.local
+
+# Environment variables (NEVER commit secrets or addresses)
+.env
+.env.local
+.env.production
+
+# System files
+.DS_Store
+Thumbs.db
