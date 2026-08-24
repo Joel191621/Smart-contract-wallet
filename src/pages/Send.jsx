@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUpRight, Fuel, AlertCircle, RefreshCw, Send as SendIcon, ShieldAlert } from 'lucide-react';
+import { ArrowUpRight, Fuel, AlertCircle, RefreshCw, Send as SendIcon, ShieldAlert, Wallet, Lock } from 'lucide-react';
 import { isValidAddress, shortenAddress } from '../utils/address';
 import { formatEth, formatUsdValue, parseEthInput } from '../utils/format';
 import { estimateSmartWalletGas } from '../services/transactionService';
 import { TransactionApproval } from '../components/TransactionApproval';
 import { TransactionStatusModal } from '../components/TransactionStatusModal';
 
-export const Send = ({ smartWallet, account, signer, isCorrectNetwork, onSwitchNetwork }) => {
+export const Send = ({ smartWallet, account, signer, isCorrectNetwork, onSwitchNetwork, onConnect, onTriggerToast }) => {
   const [recipient, setRecipient] = useState('');
   const [amountEth, setAmountEth] = useState('');
   const [validationError, setValidationError] = useState('');
@@ -81,47 +81,76 @@ export const Send = ({ smartWallet, account, signer, isCorrectNetwork, onSwitchN
     smartWallet.sendEth(recipient, amountEth);
   };
 
+  if (!account) {
+    return (
+      <div className="max-w-md mx-auto py-12 space-y-6 text-center">
+        <div className="rounded-3xl glass-panel p-8 border border-[var(--border-color)] shadow-2xl space-y-6">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-xl shadow-cyan-500/20 mx-auto">
+            <Lock className="w-8 h-8 text-white" />
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-xl font-black tracking-tight text-[var(--text-primary)]">
+              Send ETH Protected
+            </h2>
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed px-4">
+              Connect your EOA Web3 wallet to authorize and execute transfers from your Smart Contract Wallet.
+            </p>
+          </div>
+
+          <button
+            onClick={onConnect}
+            className="w-full gradient-button py-3.5 px-6 rounded-2xl text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20"
+          >
+            <Wallet className="w-4 h-4" />
+            Connect EOA Signer
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-md mx-auto space-y-6">
       
       {/* Clean Header */}
       <div className="text-center">
-        <h1 className="text-xl font-extrabold text-white tracking-tight">
+        <h1 className="text-xl font-extrabold text-[var(--text-primary)] tracking-tight">
           Send ETH
         </h1>
-        <p className="text-xs text-gray-400 mt-0.5">
+        <p className="text-xs text-[var(--text-secondary)] mt-0.5">
           Transfer funds from Smart Contract Wallet
         </p>
       </div>
 
       {/* Contract Bytecode Warning if user passed EOA in .env */}
       {isNotDeployedContract && (
-        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs space-y-2">
-          <div className="flex items-center gap-2 font-bold text-amber-300">
-            <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs space-y-2">
+          <div className="flex items-center gap-2 font-bold text-amber-500">
+            <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0" />
             <span>Configured Address is an EOA (Personal Account)</span>
           </div>
-          <p className="text-[11px] text-amber-200/90 leading-relaxed">
-            The address in your <code className="font-mono text-amber-300">.env</code> file (<code>{shortenAddress(smartWallet.smartWalletAddress, 4)}</code>) is a personal wallet address, not a deployed Smart Contract. Smart Wallet execution calls require a deployed contract address.
+          <p className="text-[11px] leading-relaxed">
+            The address in your <code className="font-mono text-amber-500">.env</code> file (<code>{shortenAddress(smartWallet.smartWalletAddress, 4)}</code>) is a personal wallet address, not a deployed Smart Contract. Smart Wallet execution calls require a deployed contract address.
           </p>
         </div>
       )}
 
       {/* Main Card */}
-      <div className="rounded-3xl glass-panel p-6 border border-white/10 space-y-5">
+      <div className="rounded-3xl glass-panel p-6 border border-[var(--border-color)] space-y-5">
         
         {/* Source Wallet Info */}
-        <div className="bg-[#0B0F19]/80 rounded-2xl p-3.5 border border-white/5 flex items-center justify-between text-xs">
-          <span className="text-gray-400 font-medium">From Smart Wallet:</span>
-          <span className="font-mono font-bold text-cyan-300">
+        <div className="bg-[var(--bg-card-subtle)] rounded-2xl p-3.5 border border-[var(--border-color)] flex items-center justify-between text-xs">
+          <span className="text-[var(--text-secondary)] font-medium">From Smart Wallet:</span>
+          <span className="font-mono font-bold text-cyan-500">
             {shortenAddress(smartWallet.smartWalletAddress, 4)} ({smartWalletBalanceEth} ETH)
           </span>
         </div>
 
         {/* Validation Error Alert */}
         {validationError && (
-          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
             <span>{validationError}</span>
           </div>
         )}
@@ -130,7 +159,7 @@ export const Send = ({ smartWallet, account, signer, isCorrectNetwork, onSwitchN
           
           {/* Recipient Input */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-300 block">
+            <label className="text-xs font-semibold text-[var(--text-primary)] block">
               Recipient Address
             </label>
             <input
@@ -141,18 +170,18 @@ export const Send = ({ smartWallet, account, signer, isCorrectNetwork, onSwitchN
                 setRecipient(e.target.value.trim());
                 setValidationError('');
               }}
-              className="w-full px-4 py-3 rounded-xl bg-[#0B0F19] border border-white/10 text-white placeholder-gray-500 font-mono text-xs focus:outline-none focus:border-cyan-500 transition-colors"
+              className="w-full px-4 py-3 rounded-xl bg-[var(--bg-card-subtle)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] font-mono text-xs focus:outline-none focus:border-cyan-500 transition-colors"
             />
           </div>
 
           {/* Amount Input */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
-              <label className="font-semibold text-gray-300">Amount (ETH)</label>
+              <label className="font-semibold text-[var(--text-primary)]">Amount (ETH)</label>
               <button
                 type="button"
                 onClick={handleMaxAmount}
-                className="text-cyan-400 hover:text-cyan-300 font-bold text-[11px] uppercase tracking-wider cursor-pointer"
+                className="text-cyan-500 hover:text-cyan-400 font-bold text-[11px] uppercase tracking-wider cursor-pointer"
               >
                 Max
               </button>
@@ -168,26 +197,26 @@ export const Send = ({ smartWallet, account, signer, isCorrectNetwork, onSwitchN
                   setAmountEth(e.target.value);
                   setValidationError('');
                 }}
-                className="w-full px-4 py-3 rounded-xl bg-[#0B0F19] border border-white/10 text-white placeholder-gray-500 font-mono text-sm focus:outline-none focus:border-cyan-500 transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-card-subtle)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] font-mono text-sm focus:outline-none focus:border-cyan-500 transition-colors"
               />
-              <div className="absolute right-3 top-3 text-xs text-gray-400 font-bold">
+              <div className="absolute right-3 top-3 text-xs text-[var(--text-secondary)] font-bold">
                 ETH
               </div>
             </div>
             {amountEth && parseFloat(amountEth) > 0 && (
-              <span className="text-[11px] text-gray-400 block text-right font-mono">
+              <span className="text-[11px] text-[var(--text-secondary)] block text-right font-mono">
                 ≈ {formatUsdValue(amountEth)}
               </span>
             )}
           </div>
 
           {/* Gas Estimate */}
-          <div className="p-3 rounded-xl bg-[#0B0F19]/60 border border-white/5 flex items-center justify-between text-xs">
-            <span className="text-gray-400 flex items-center gap-1.5">
-              <Fuel className="w-3.5 h-3.5 text-amber-400" />
+          <div className="p-3 rounded-xl bg-[var(--bg-card-subtle)] border border-[var(--border-color)] flex items-center justify-between text-xs">
+            <span className="text-[var(--text-secondary)] flex items-center gap-1.5">
+              <Fuel className="w-3.5 h-3.5 text-amber-500" />
               Est. Network Fee:
             </span>
-            <span className="font-mono text-gray-300">
+            <span className="font-mono text-[var(--text-primary)]">
               {isEstimatingGas ? 'Estimating...' : gasEstimate ? `~${formatEth(gasEstimate.estimatedCostWei, 6)} ETH` : '~0.000225 ETH'}
             </span>
           </div>
