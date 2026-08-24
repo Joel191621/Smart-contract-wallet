@@ -20,7 +20,7 @@ export const useWallet = () => {
   const checkConnection = useCallback(async () => {
     if (!window.ethereum) return;
     const userDisconnected = localStorage.getItem(DISCONNECT_FLAG_KEY) === 'true';
-    if (userDisconnected) return; // Respect explicit disconnect
+    if (userDisconnected) return;
 
     try {
       const browserProvider = new BrowserProvider(window.ethereum);
@@ -85,17 +85,15 @@ export const useWallet = () => {
     }
     setIsConnecting(true);
     setError(null);
-    localStorage.removeItem(DISCONNECT_FLAG_KEY); // Clear disconnect flag
+    localStorage.removeItem(DISCONNECT_FLAG_KEY);
 
     try {
-      // Force MetaMask permission request popup window to select/authorize account
       try {
         await window.ethereum.request({
           method: 'wallet_requestPermissions',
           params: [{ eth_accounts: {} }]
         });
       } catch (permError) {
-        // If user closes or cancels permissions popup, throw user rejection
         if (permError.code === 4001) {
           throw new Error('Wallet connection request rejected by user.');
         }
@@ -128,10 +126,11 @@ export const useWallet = () => {
     setError(null);
   };
 
-  const switchNetwork = async () => {
+  // Switch network to target network or primary Sepolia network
+  const switchNetwork = async (targetNetwork = PRIMARY_NETWORK) => {
     setError(null);
     try {
-      await requestSwitchNetwork(PRIMARY_NETWORK);
+      await requestSwitchNetwork(targetNetwork);
     } catch (err) {
       setError(err.message || 'Failed to switch network.');
     }

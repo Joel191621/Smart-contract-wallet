@@ -43,16 +43,30 @@ export const formatUsdValue = (ethAmountStr) => {
 };
 
 /**
- * Format relative timestamp (e.g. "2 min ago", "1 hour ago")
+ * Format timestamp into real-time date and time (e.g. "Aug 24, 09:42 AM" or "2m ago (09:42 AM)")
  */
 export const formatRelativeTime = (timestamp) => {
-  if (!timestamp) return 'Recently';
-  const date = typeof timestamp === 'number' ? new Date(timestamp * 1000) : new Date(timestamp);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now - date) / 1000);
+  if (!timestamp) return 'Just now';
+  const date = typeof timestamp === 'number' ? new Date(timestamp > 1e11 ? timestamp : timestamp * 1000) : new Date(timestamp);
+  
+  if (isNaN(date.getTime())) return 'Recently';
 
-  if (diffInSeconds < 60) return 'Just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  const timeString = date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+
+  const dateString = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric'
+  });
+
+  const diffInSeconds = Math.floor((new Date() - date) / 1000);
+
+  if (diffInSeconds < 60) return `Just now (${timeString})`;
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago (${timeString})`;
+  if (diffInSeconds < 86400) return `Today at ${timeString}`;
+  
+  return `${dateString} at ${timeString}`;
 };

@@ -1,7 +1,7 @@
-import { PRIMARY_NETWORK } from '../config/networks';
+import { PRIMARY_NETWORK, NETWORKS } from '../config/networks';
 
 /**
- * Switch wallet provider to target network (Ethereum Sepolia by default)
+ * Switch wallet provider to target network (Ethereum Sepolia, Polygon Amoy, etc.)
  */
 export const switchNetwork = async (targetNetwork = PRIMARY_NETWORK) => {
   if (!window.ethereum) {
@@ -9,7 +9,7 @@ export const switchNetwork = async (targetNetwork = PRIMARY_NETWORK) => {
   }
 
   try {
-    // Request network switch
+    // Request network switch in MetaMask
     await window.ethereum.request({
       method: 'wallet_switchEthereumChain',
       params: [{ chainId: targetNetwork.hexChainId }]

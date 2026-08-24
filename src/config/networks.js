@@ -10,7 +10,8 @@ export const NETWORKS = {
     explorerUrl: 'https://sepolia.etherscan.io',
     apiEndpoint: 'https://api-sepolia.etherscan.io/api',
     isPrimary: true,
-    supported: true
+    supported: true,
+    walletAddress: import.meta.env.VITE_SMART_WALLET_ADDRESS || ''
   },
   polygonAmoy: {
     chainId: 80002,
@@ -22,8 +23,8 @@ export const NETWORKS = {
     rpcUrl: 'https://rpc-amoy.polygon.technology',
     explorerUrl: 'https://amoy.polygonscan.com',
     isPrimary: false,
-    supported: false,
-    note: 'Requires distinct contract deployment on Amoy'
+    supported: Boolean(import.meta.env.VITE_POLYGON_AMOY_WALLET_ADDRESS),
+    walletAddress: import.meta.env.VITE_POLYGON_AMOY_WALLET_ADDRESS || ''
   },
   arbitrumSepolia: {
     chainId: 421614,
@@ -35,8 +36,8 @@ export const NETWORKS = {
     rpcUrl: 'https://sepolia-rollup.arbitrum.io/rpc',
     explorerUrl: 'https://sepolia.arbiscan.io',
     isPrimary: false,
-    supported: false,
-    note: 'Requires distinct contract deployment on Arbitrum'
+    supported: Boolean(import.meta.env.VITE_ARBITRUM_SEPOLIA_WALLET_ADDRESS),
+    walletAddress: import.meta.env.VITE_ARBITRUM_SEPOLIA_WALLET_ADDRESS || ''
   },
   baseSepolia: {
     chainId: 84532,
@@ -48,8 +49,8 @@ export const NETWORKS = {
     rpcUrl: 'https://sepolia.base.org',
     explorerUrl: 'https://sepolia.basescan.org',
     isPrimary: false,
-    supported: false,
-    note: 'Requires distinct contract deployment on Base'
+    supported: Boolean(import.meta.env.VITE_BASE_SEPOLIA_WALLET_ADDRESS),
+    walletAddress: import.meta.env.VITE_BASE_SEPOLIA_WALLET_ADDRESS || ''
   }
 };
 
