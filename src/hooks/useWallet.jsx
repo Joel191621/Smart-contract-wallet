@@ -16,11 +16,15 @@ export const useWallet = () => {
   const isCorrectNetwork = chainId === PRIMARY_NETWORK.chainId;
   const currentNetwork = getNetworkByChainId(chainId) || (chainId ? { name: `Chain ${chainId}`, chainId } : null);
 
-  // Initialize provider and check existing connection if user hasn't explicitly disconnected
+  // Check connection state unless user explicitly logged out / disconnected
   const checkConnection = useCallback(async () => {
     if (!window.ethereum) return;
     const userDisconnected = localStorage.getItem(DISCONNECT_FLAG_KEY) === 'true';
-    if (userDisconnected) return;
+    if (userDisconnected) {
+      setAccount(null);
+      setSigner(null);
+      return;
+    }
 
     try {
       const browserProvider = new BrowserProvider(window.ethereum);
@@ -34,6 +38,9 @@ export const useWallet = () => {
         setAccount(accounts[0].address);
         const ethSigner = await browserProvider.getSigner();
         setSigner(ethSigner);
+      } else {
+        setAccount(null);
+        setSigner(null);
       }
     } catch (err) {
       console.warn('Error checking existing wallet connection:', err);
@@ -77,7 +84,7 @@ export const useWallet = () => {
     }
   }, [checkConnection]);
 
-  // Connect wallet with explicit MetaMask permission modal prompt
+  // Connect wallet with explicit MetaMask permission modal prompt window
   const connect = async () => {
     if (!window.ethereum) {
       setError('No Web3 wallet extension found. Please install MetaMask to continue.');
@@ -85,9 +92,10 @@ export const useWallet = () => {
     }
     setIsConnecting(true);
     setError(null);
-    localStorage.removeItem(DISCONNECT_FLAG_KEY);
+    localStorage.removeItem(DISCONNECT_FLAG_KEY); // Clear disconnect flag
 
     try {
+      // Force MetaMask permission request window popup
       try {
         await window.ethereum.request({
           method: 'wallet_requestPermissions',
@@ -126,7 +134,7 @@ export const useWallet = () => {
     setError(null);
   };
 
-  // Switch network to target network or primary Sepolia network
+  // Switch network to target network
   const switchNetwork = async (targetNetwork = PRIMARY_NETWORK) => {
     setError(null);
     try {

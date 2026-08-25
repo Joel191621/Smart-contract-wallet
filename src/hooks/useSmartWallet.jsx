@@ -20,7 +20,7 @@ export const useSmartWallet = (connectedEOA, signer, provider) => {
     hasEIP1271: false,
     hasNonce: false
   });
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
   // Transaction execution status state
@@ -41,7 +41,10 @@ export const useSmartWallet = (connectedEOA, signer, provider) => {
 
   // Refresh Smart Wallet state
   const refreshData = useCallback(async () => {
-    if (!config.isConfigured) {
+    if (!config.isConfigured || !connectedEOA) {
+      setBalance(0n);
+      setOwnerAddress(null);
+      setNonce(0n);
       setIsLoading(false);
       return;
     }
@@ -67,18 +70,33 @@ export const useSmartWallet = (connectedEOA, signer, provider) => {
     } finally {
       setIsLoading(false);
     }
-  }, [config.isConfigured, smartWalletAddress, provider]);
+  }, [config.isConfigured, connectedEOA, smartWalletAddress, provider]);
 
   useEffect(() => {
+    if (!connectedEOA) {
+      // Complete reset when disconnected
+      setBalance(0n);
+      setOwnerAddress(null);
+      setNonce(0n);
+      setCapabilities({
+        isDeployed: false,
+        hasExecute: false,
+        hasOwner: false,
+        hasEIP1271: false,
+        hasNonce: false
+      });
+      setIsLoading(false);
+      return;
+    }
+
     refreshData();
-    // Auto-refresh balance every 15 seconds
     const interval = setInterval(refreshData, 15000);
     return () => clearInterval(interval);
-  }, [refreshData]);
+  }, [connectedEOA, refreshData]);
 
   // Execute Send ETH action from Smart Wallet
   const sendEth = async (recipient, amountEth) => {
-    if (!signer) {
+    if (!signer || !connectedEOA) {
       setTxState({
         status: 'failed',
         message: 'No EOA signer connected.',
