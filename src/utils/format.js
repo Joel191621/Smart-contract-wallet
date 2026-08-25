@@ -4,16 +4,17 @@ import { formatEther, parseEther } from 'ethers';
 const MOCK_ETH_USD_PRICE = 2650.00;
 
 /**
- * Format wei string or BigInt to ETH decimal string
+ * Format wei string or BigInt to ETH decimal string with exact string precision (no float rounding errors)
  */
-export const formatEth = (wei, decimals = 4) => {
+export const formatEth = (wei, decimals = 6) => {
   if (wei === null || wei === undefined) return '0.0000';
   try {
-    const ethVal = parseFloat(formatEther(wei));
-    return ethVal.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: decimals
-    });
+    const rawEth = formatEther(wei);
+    const parts = rawEth.split('.');
+    if (parts.length === 1) return parts[0] + '.0000';
+    const dec = parts[1].substring(0, decimals).replace(/0+$/, '');
+    const finalDec = dec.length < 2 ? dec.padEnd(2, '0') : dec;
+    return `${parts[0]}.${finalDec}`;
   } catch (err) {
     console.error('Error formatting ETH:', err);
     return '0.0000';
@@ -43,7 +44,7 @@ export const formatUsdValue = (ethAmountStr) => {
 };
 
 /**
- * Format timestamp into real-time date and time (e.g. "Aug 24, 09:42 AM" or "2m ago (09:42 AM)")
+ * Format timestamp into real-time date and time (e.g. "Aug 24 at 09:42 AM")
  */
 export const formatRelativeTime = (timestamp) => {
   if (!timestamp) return 'Just now';

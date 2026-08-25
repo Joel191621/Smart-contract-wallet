@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { WalletCard } from '../components/WalletCard';
 import { fetchTransactionHistory } from '../services/etherscanService';
 import { shortenAddress } from '../utils/address';
 import { formatRelativeTime } from '../utils/format';
-import { ArrowUpRight, ArrowDownLeft, Activity, RefreshCw, Wallet, ShieldCheck } from 'lucide-react';
+import { ArrowUpRight, RefreshCw, Wallet, ShieldCheck } from 'lucide-react';
 
 export const Dashboard = ({
   smartWallet,
@@ -15,7 +15,7 @@ export const Dashboard = ({
   const [recentTxs, setRecentTxs] = useState([]);
   const [loadingTxs, setLoadingTxs] = useState(false);
 
-  useEffect(() => {
+  const loadRecentActivity = useCallback(() => {
     if (account && smartWallet.smartWalletAddress) {
       setLoadingTxs(true);
       fetchTransactionHistory(smartWallet.smartWalletAddress)
@@ -27,13 +27,21 @@ export const Dashboard = ({
     }
   }, [account, smartWallet.smartWalletAddress]);
 
-  const handleRefresh = () => {
+  useEffect(() => {
+    loadRecentActivity();
+  }, [loadRecentActivity]);
+
+  const handleRefreshBalance = () => {
     smartWallet.refreshData();
-    if (account && smartWallet.smartWalletAddress) {
-      setLoadingTxs(true);
-      fetchTransactionHistory(smartWallet.smartWalletAddress)
-        .then(txs => setRecentTxs(txs.slice(0, 4)))
-        .finally(() => setLoadingTxs(false));
+    if (onTriggerToast) {
+      onTriggerToast("Smart Wallet Balance refreshed");
+    }
+  };
+
+  const handleRefreshActivity = () => {
+    loadRecentActivity();
+    if (onTriggerToast) {
+      onTriggerToast("Recent Activity refreshed");
     }
   };
 
@@ -75,7 +83,7 @@ export const Dashboard = ({
         smartWalletAddress={smartWallet.smartWalletAddress}
         balance={smartWallet.balance}
         isLoading={smartWallet.isLoading}
-        onRefresh={handleRefresh}
+        onRefresh={handleRefreshBalance}
         onNavigate={onNavigate}
         connectedEOA={account}
         isOwnerConnected={smartWallet.isOwnerConnected}
@@ -87,10 +95,17 @@ export const Dashboard = ({
       <div className="rounded-3xl glass-panel p-6 border border-[var(--border-color)] space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-cyan-500" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
               Recent Activity
             </h3>
+            <button
+              onClick={handleRefreshActivity}
+              disabled={loadingTxs}
+              className="p-1 text-[var(--text-secondary)] hover:text-cyan-500 transition-colors cursor-pointer"
+              title="Refresh Recent Activity"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loadingTxs ? 'animate-spin text-cyan-500' : ''}`} />
+            </button>
           </div>
           <button
             onClick={() => onNavigate('activity')}
@@ -104,7 +119,7 @@ export const Dashboard = ({
         {loadingTxs ? (
           <div className="py-6 text-center text-xs text-[var(--text-secondary)] flex items-center justify-center gap-2">
             <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-500" />
-            Loading recent transactions...
+            Loading recent activity...
           </div>
         ) : recentTxs.length > 0 ? (
           <div className="space-y-2">
@@ -115,22 +130,17 @@ export const Dashboard = ({
                   key={tx.hash || idx}
                   className="flex items-center justify-between p-3.5 rounded-2xl bg-[var(--bg-card-subtle)] hover:border-cyan-500/30 border border-[var(--border-color)] transition-colors text-xs"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2.5 rounded-xl ${isSent ? 'bg-amber-500/10 text-amber-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
-                      {isSent ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownLeft className="w-4 h-4" />}
-                    </div>
-                    <div>
-                      <span className="font-semibold text-[var(--text-primary)] block">
-                        {isSent ? 'Sent ETH' : 'Received ETH'}
-                      </span>
-                      <span className="font-mono text-[11px] text-[var(--text-secondary)]">
-                        {isSent ? `To: ${shortenAddress(tx.to, 4)}` : `From: ${shortenAddress(tx.from, 4)}`}
-                      </span>
-                    </div>
+                  <div>
+                    <span className="font-bold text-[var(--text-primary)] block">
+                      {isSent ? 'Sent ETH' : 'Received ETH'}
+                    </span>
+                    <span className="font-mono text-[11px] text-[var(--text-secondary)]">
+                      {isSent ? `To: ${shortenAddress(tx.to, 4)}` : `From: ${shortenAddress(tx.from, 4)}`}
+                    </span>
                   </div>
 
                   <div className="text-right">
-                    <span className="font-mono font-bold text-[var(--text-primary)] block">
+                    <span className={`font-mono font-bold block ${isSent ? 'text-amber-500' : 'text-emerald-500'}`}>
                       {isSent ? '-' : '+'}{tx.amountEth} ETH
                     </span>
                     <span className="text-[11px] text-[var(--text-secondary)] font-mono">
