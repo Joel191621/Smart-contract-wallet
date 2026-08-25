@@ -16,6 +16,9 @@ export const Receive = ({ smartWalletAddress, account, onConnect, onTriggerToast
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // EIP-681 Standard Ethereum URI for mobile wallet QR scanners (MetaMask Mobile, Rainbow, Coinbase Wallet)
+  const qrUri = smartWalletAddress ? `ethereum:${smartWalletAddress}@${PRIMARY_NETWORK.chainId}` : '';
+
   if (!account) {
     return (
       <div className="max-w-md mx-auto py-12 space-y-6 text-center">
@@ -69,15 +72,15 @@ export const Receive = ({ smartWalletAddress, account, onConnect, onTriggerToast
             <strong className="font-bold block text-amber-500">
               Important: Send ONLY to Smart Contract Wallet
             </strong>
-            This is your <strong>Smart Contract Wallet address</strong> on Sepolia. Do NOT send funds to your connected EOA signer address if you intend to deposit into this Smart Wallet.
+            This is your <strong>Smart Contract Wallet address</strong> on Sepolia. Scan with any mobile Web3 wallet to deposit ETH.
           </div>
         </div>
 
-        {/* QR Code */}
+        {/* EIP-681 Functional QR Code */}
         <div className="flex flex-col items-center justify-center p-5 bg-white rounded-2xl shadow-xl max-w-[200px] mx-auto">
           {smartWalletAddress ? (
             <QRCodeSVG
-              value={smartWalletAddress}
+              value={qrUri}
               size={160}
               level="H"
               includeMargin={true}
@@ -88,7 +91,7 @@ export const Receive = ({ smartWalletAddress, account, onConnect, onTriggerToast
             </div>
           )}
           <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-2">
-            Sepolia Smart Wallet Address
+            EIP-681 Sepolia Deposit QR
           </span>
         </div>
 

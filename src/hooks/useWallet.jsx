@@ -92,10 +92,10 @@ export const useWallet = () => {
     }
     setIsConnecting(true);
     setError(null);
-    localStorage.removeItem(DISCONNECT_FLAG_KEY); // Clear disconnect flag
+    localStorage.removeItem(DISCONNECT_FLAG_KEY); // Clear disconnect preference
 
     try {
-      // Force MetaMask permission request window popup
+      // Force MetaMask permission request popup window to choose account
       try {
         await window.ethereum.request({
           method: 'wallet_requestPermissions',
