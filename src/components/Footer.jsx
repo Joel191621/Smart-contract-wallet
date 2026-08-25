@@ -7,9 +7,9 @@ export const Footer = () => {
       <div className="max-w-5xl mx-auto flex items-center justify-between text-xs text-[var(--text-secondary)]">
         <div className="flex items-center gap-1.5 font-semibold text-[var(--text-primary)]">
           <ShieldCheck className="w-4 h-4 text-cyan-500" />
-          <span>Aegis Vault</span>
+          <span>Vault Sentinel</span>
         </div>
-        <span className="text-[11px]">© {new Date().getFullYear()} Aegis Vault. All rights reserved.</span>
+        <span className="text-[11px]">© {new Date().getFullYear()} Vault Sentinel. All rights reserved.</span>
       </div>
     </footer>
   );

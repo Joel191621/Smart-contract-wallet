@@ -50,7 +50,7 @@ export const Navbar = ({
               <ShieldCheck className="w-5 h-5 text-white" />
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-base tracking-tight text-[var(--text-primary)]">Aegis Vault</span>
+              <span className="font-bold text-base tracking-tight text-[var(--text-primary)]">Vault Sentinel</span>
               <span className="px-1.5 py-0.5 text-[9px] uppercase font-bold rounded bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">
                 Smart Wallet
               </span>

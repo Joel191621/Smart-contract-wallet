@@ -1,4 +1,4 @@
-# Aegis Vault — Smart Contract Wallet DApp with EOA-Based Signing
+# Vault Sentinel — Smart Contract Wallet DApp with EOA-Based Signing
 
 A production-grade, highly secure **Smart Contract Wallet Web DApp** built with React, Vite, Tailwind CSS, and Ethers.js v6.
 
@@ -154,10 +154,3 @@ On Ethereum, smart contracts cannot initiate transactions spontaneously. An on-c
 * 🛡️ **Sanitized Environment Variables**: No server secrets or private keys are exposed via Vite frontend variables.
 * 🚦 **Network Isolation**: Strict verification ensures transactions are executed on Ethereum Sepolia (Chain ID: `11155111`).
 * 📜 **Explicit Approvals**: All transactions require explicit pre-flight review before requesting wallet signatures.
-
----
-
-## 9. Known Limitations & Notes
-
-* **On-Chain Gas Fee**: Because transactions are executed on Sepolia, the connected EOA requires a tiny amount of Sepolia testnet ETH to pay for transaction gas.
-* **Network Scope**: Primary network support is configured for Sepolia testnet. Multi-network selections in Settings display placeholders for future chain deployments.

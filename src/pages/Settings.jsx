@@ -13,7 +13,7 @@ export const Settings = ({
   onConnect,
   onTriggerToast
 }) => {
-  const [testMessage, setTestMessage] = useState('Verify Aegis Vault Signer Authorization');
+  const [testMessage, setTestMessage] = useState('Verify Vault Sentinel Signer Authorization');
   const [signStatus, setSignStatus] = useState(null);
   const [isSigning, setIsSigning] = useState(false);
   const [switchingChainId, setSwitchingChainId] = useState(null);
