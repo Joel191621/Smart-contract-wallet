@@ -13,10 +13,11 @@ export const useWallet = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState(null);
 
-  const isCorrectNetwork = chainId === PRIMARY_NETWORK.chainId;
-  const currentNetwork = getNetworkByChainId(chainId) || (chainId ? { name: `Chain ${chainId}`, chainId } : null);
+  // Compare Chain IDs cleanly (handling both hex strings and BigInt/Numbers)
+  const isCorrectNetwork = Boolean(chainId) && Number(chainId) === Number(PRIMARY_NETWORK.chainId);
+  const currentNetwork = getNetworkByChainId(chainId) || (chainId ? { name: `Chain ${chainId}`, chainId: Number(chainId) } : null);
 
-  // Check connection state unless user explicitly logged out / disconnected
+  // Check connection state with 'any' network mode to prevent stale network caching in Ethers v6
   const checkConnection = useCallback(async () => {
     if (!window.ethereum) return;
     const userDisconnected = localStorage.getItem(DISCONNECT_FLAG_KEY) === 'true';
@@ -27,11 +28,12 @@ export const useWallet = () => {
     }
 
     try {
-      const browserProvider = new BrowserProvider(window.ethereum);
+      const browserProvider = new BrowserProvider(window.ethereum, 'any');
       setProvider(browserProvider);
 
       const network = await browserProvider.getNetwork();
-      setChainId(Number(network.chainId));
+      const currentChainId = Number(network.chainId);
+      setChainId(currentChainId);
 
       const accounts = await browserProvider.listAccounts();
       if (accounts.length > 0) {
@@ -59,17 +61,33 @@ export const useWallet = () => {
         } else {
           setAccount(accounts[0]);
           if (window.ethereum) {
-            const browserProvider = new BrowserProvider(window.ethereum);
+            const browserProvider = new BrowserProvider(window.ethereum, 'any');
             const ethSigner = await browserProvider.getSigner();
             setSigner(ethSigner);
           }
         }
       };
 
-      const handleChainChanged = (newHexChainId) => {
-        const newChainId = parseInt(newHexChainId, 16);
+      const handleChainChanged = async (newHexChainId) => {
+        // Immediately parse hex or decimal chainId from event payload
+        const newChainId = typeof newHexChainId === 'string'
+          ? (newHexChainId.startsWith('0x') ? parseInt(newHexChainId, 16) : Number(newHexChainId))
+          : Number(newHexChainId);
+        
         setChainId(newChainId);
-        checkConnection();
+
+        try {
+          const browserProvider = new BrowserProvider(window.ethereum, 'any');
+          setProvider(browserProvider);
+          const accounts = await browserProvider.listAccounts();
+          if (accounts.length > 0) {
+            setAccount(accounts[0].address);
+            const ethSigner = await browserProvider.getSigner();
+            setSigner(ethSigner);
+          }
+        } catch (e) {
+          console.warn('Chain change handler refresh warning:', e);
+        }
       };
 
       window.ethereum.on('accountsChanged', handleAccountsChanged);
@@ -92,10 +110,9 @@ export const useWallet = () => {
     }
     setIsConnecting(true);
     setError(null);
-    localStorage.removeItem(DISCONNECT_FLAG_KEY); // Clear disconnect preference
+    localStorage.removeItem(DISCONNECT_FLAG_KEY);
 
     try {
-      // Force MetaMask permission request popup window to choose account
       try {
         await window.ethereum.request({
           method: 'wallet_requestPermissions',
@@ -107,7 +124,7 @@ export const useWallet = () => {
         }
       }
 
-      const browserProvider = new BrowserProvider(window.ethereum);
+      const browserProvider = new BrowserProvider(window.ethereum, 'any');
       setProvider(browserProvider);
       
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -139,6 +156,10 @@ export const useWallet = () => {
     setError(null);
     try {
       await requestSwitchNetwork(targetNetwork);
+      // Immediately refresh chain state
+      const browserProvider = new BrowserProvider(window.ethereum, 'any');
+      const net = await browserProvider.getNetwork();
+      setChainId(Number(net.chainId));
     } catch (err) {
       setError(err.message || 'Failed to switch network.');
     }
