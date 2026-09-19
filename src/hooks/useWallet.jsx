@@ -13,11 +13,15 @@ export const useWallet = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState(null);
 
-  // Compare Chain IDs cleanly (handling both hex strings and BigInt/Numbers)
-  const isCorrectNetwork = Boolean(chainId) && Number(chainId) === Number(PRIMARY_NETWORK.chainId);
+  // Directly check against 11155111 or 0xaa36a7
+  const isCorrectNetwork = Boolean(chainId) && (
+    Number(chainId) === 11155111 || 
+    String(chainId).toLowerCase() === '0xaa36a7'
+  );
+
   const currentNetwork = getNetworkByChainId(chainId) || (chainId ? { name: `Chain ${chainId}`, chainId: Number(chainId) } : null);
 
-  // Check connection state with 'any' network mode to prevent stale network caching in Ethers v6
+  // Directly query EIP-1193 eth_chainId from window.ethereum to bypass any library caching
   const checkConnection = useCallback(async () => {
     if (!window.ethereum) return;
     const userDisconnected = localStorage.getItem(DISCONNECT_FLAG_KEY) === 'true';
@@ -28,12 +32,13 @@ export const useWallet = () => {
     }
 
     try {
+      // Read exact raw active chainId directly from MetaMask provider
+      const rawHexChainId = await window.ethereum.request({ method: 'eth_chainId' });
+      const currentChainId = parseInt(rawHexChainId, 16);
+      setChainId(currentChainId);
+
       const browserProvider = new BrowserProvider(window.ethereum, 'any');
       setProvider(browserProvider);
-
-      const network = await browserProvider.getNetwork();
-      const currentChainId = Number(network.chainId);
-      setChainId(currentChainId);
 
       const accounts = await browserProvider.listAccounts();
       if (accounts.length > 0) {
@@ -69,7 +74,6 @@ export const useWallet = () => {
       };
 
       const handleChainChanged = async (newHexChainId) => {
-        // Immediately parse hex or decimal chainId from event payload
         const newChainId = typeof newHexChainId === 'string'
           ? (newHexChainId.startsWith('0x') ? parseInt(newHexChainId, 16) : Number(newHexChainId))
           : Number(newHexChainId);
@@ -133,8 +137,8 @@ export const useWallet = () => {
         const ethSigner = await browserProvider.getSigner();
         setSigner(ethSigner);
         
-        const network = await browserProvider.getNetwork();
-        setChainId(Number(network.chainId));
+        const rawHexChainId = await window.ethereum.request({ method: 'eth_chainId' });
+        setChainId(parseInt(rawHexChainId, 16));
       }
     } catch (err) {
       setError(err.message || 'Failed to connect wallet.');
@@ -156,10 +160,8 @@ export const useWallet = () => {
     setError(null);
     try {
       await requestSwitchNetwork(targetNetwork);
-      // Immediately refresh chain state
-      const browserProvider = new BrowserProvider(window.ethereum, 'any');
-      const net = await browserProvider.getNetwork();
-      setChainId(Number(net.chainId));
+      const rawHexChainId = await window.ethereum.request({ method: 'eth_chainId' });
+      setChainId(parseInt(rawHexChainId, 16));
     } catch (err) {
       setError(err.message || 'Failed to switch network.');
     }
