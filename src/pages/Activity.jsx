@@ -5,7 +5,7 @@ import { shortenAddress } from '../utils/address';
 import { formatRelativeTime } from '../utils/format';
 import { PRIMARY_NETWORK } from '../config/networks';
 
-export const ActivityPage = ({ smartWalletAddress, account, onConnect, onTriggerToast }) => {
+export const ActivityPage = ({ smartWalletAddress, account, provider, onConnect, onTriggerToast }) => {
   const [transactions, setTransactions] = useState([]);
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -14,7 +14,7 @@ export const ActivityPage = ({ smartWalletAddress, account, onConnect, onTrigger
   const loadHistory = () => {
     if (!account || !smartWalletAddress) return;
     setIsLoading(true);
-    fetchTransactionHistory(smartWalletAddress)
+    fetchTransactionHistory(smartWalletAddress, provider)
       .then(txs => setTransactions(txs))
       .catch(err => console.error('Failed to load activity history:', err))
       .finally(() => setIsLoading(false));
@@ -22,7 +22,7 @@ export const ActivityPage = ({ smartWalletAddress, account, onConnect, onTrigger
 
   useEffect(() => {
     loadHistory();
-  }, [smartWalletAddress, account]);
+  }, [smartWalletAddress, account, provider]);
 
   const filteredTxs = transactions.filter(tx => {
     if (filter === 'sent' && tx.type !== 'Sent') return false;

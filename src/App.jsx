@@ -69,7 +69,7 @@ export default function App() {
   };
 
   const handleWalletDeployed = (deployedProxyAddress) => {
-    smartWallet.refreshData();
+    smartWallet.setWalletAddress(deployedProxyAddress);
     setActiveTab('dashboard');
   };
 
@@ -109,6 +109,7 @@ export default function App() {
           <Dashboard
             smartWallet={smartWallet}
             account={account}
+            provider={provider}
             onConnect={connect}
             onNavigate={setActiveTab}
             onTriggerToast={showToast}
@@ -142,6 +143,7 @@ export default function App() {
           <Receive
             smartWalletAddress={smartWallet.smartWalletAddress}
             account={account}
+            provider={provider}
             onConnect={connect}
             onTriggerToast={showToast}
           />
@@ -151,6 +153,7 @@ export default function App() {
           <ActivityPage
             smartWalletAddress={smartWallet.smartWalletAddress}
             account={account}
+            provider={provider}
             onConnect={connect}
             onTriggerToast={showToast}
           />

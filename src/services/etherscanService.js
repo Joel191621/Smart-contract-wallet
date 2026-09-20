@@ -1,75 +1,97 @@
-import { PRIMARY_NETWORK } from '../config/networks';
-import { formatEth } from '../utils/format';
+import { Contract, formatEther } from 'ethers';
+import { SmartWalletABI } from '../config/walletConfig';
 
 const LOCAL_TX_CACHE_KEY = 'smart_wallet_tx_history';
 
-/**
- * Get locally saved transactions from localStorage
- */
 export const getLocalTxHistory = (walletAddress) => {
+  if (!walletAddress) return [];
   try {
     const raw = localStorage.getItem(`${LOCAL_TX_CACHE_KEY}_${walletAddress.toLowerCase()}`);
-    if (!raw) return [];
-    return JSON.parse(raw);
+    return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
 };
 
-/**
- * Save a new local transaction to localStorage cache
- */
 export const saveLocalTx = (walletAddress, txRecord) => {
+  if (!walletAddress) return;
   try {
     const history = getLocalTxHistory(walletAddress);
-    const updated = [txRecord, ...history.filter(t => t.hash !== txRecord.hash)];
+    const updated = [txRecord, ...history.filter((t) => t.hash !== txRecord.hash)];
     localStorage.setItem(`${LOCAL_TX_CACHE_KEY}_${walletAddress.toLowerCase()}`, JSON.stringify(updated));
   } catch (err) {
     console.error('Failed to save tx to local cache:', err);
   }
 };
 
+const blockTimestamp = async (provider, blockNumber, cache) => {
+  if (cache.has(blockNumber)) return cache.get(blockNumber);
+  const block = await provider.getBlock(blockNumber);
+  const timestamp = block ? Number(block.timestamp) * 1000 : Date.now();
+  cache.set(blockNumber, timestamp);
+  return timestamp;
+};
+
 /**
- * Fetch transaction history from Sepolia Etherscan API with local cache merging
+ * Read wallet activity directly from the connected RPC. This avoids requiring an
+ * Etherscan API key and works with the actual proxy wallet address.
  */
-export const fetchTransactionHistory = async (walletAddress) => {
+export const fetchTransactionHistory = async (walletAddress, provider) => {
   if (!walletAddress) return [];
 
   const localTxs = getLocalTxHistory(walletAddress);
+  if (!provider) return localTxs;
 
   try {
-    const apiEndpoint = PRIMARY_NETWORK.apiEndpoint;
-    const url = `${apiEndpoint}?module=account&action=txlist&address=${walletAddress}&startblock=0&endblock=99999999&sort=desc&apikey=YourApiKeyToken`;
+    const wallet = new Contract(walletAddress, SmartWalletABI, provider);
+    const [receivedLogs, executionLogs] = await Promise.all([
+      wallet.queryFilter(wallet.filters.Received()),
+      wallet.queryFilter(wallet.filters.ExecutionSuccess())
+    ]);
 
-    const response = await fetch(url);
-    const data = await response.json();
+    const timestamps = new Map();
+    const records = [];
 
-    let fetchedTxs = [];
-    if (data.status === '1' && Array.isArray(data.result)) {
-      fetchedTxs = data.result.map(tx => {
-        const isSent = tx.from.toLowerCase() === walletAddress.toLowerCase();
-        return {
-          hash: tx.hash,
-          type: isSent ? 'Sent' : 'Received',
-          from: tx.from,
-          to: tx.to,
-          amountEth: formatEth(tx.value),
-          valueWei: tx.value,
-          status: tx.txreceipt_status === '1' || tx.isError === '0' ? 'Success' : 'Failed',
-          timestamp: parseInt(tx.timeStamp) * 1000,
-          blockNumber: tx.blockNumber
-        };
+    for (const log of receivedLogs) {
+      const sender = log.args?.sender;
+      const amount = log.args?.amount ?? 0n;
+      records.push({
+        hash: log.transactionHash,
+        type: 'Received',
+        from: sender,
+        to: walletAddress,
+        amountEth: formatEther(amount),
+        valueWei: amount.toString(),
+        status: 'Success',
+        timestamp: await blockTimestamp(provider, log.blockNumber, timestamps),
+        blockNumber: log.blockNumber
       });
     }
 
-    // Merge API results with local cached transactions (avoiding duplicates)
-    const combinedHashes = new Set(fetchedTxs.map(t => t.hash.toLowerCase()));
-    const uniqueLocalTxs = localTxs.filter(lt => !combinedHashes.has(lt.hash.toLowerCase()));
+    for (const log of executionLogs) {
+      const target = log.args?.target;
+      const amount = log.args?.value ?? 0n;
+      records.push({
+        hash: log.transactionHash,
+        type: 'Sent',
+        from: walletAddress,
+        to: target,
+        amountEth: formatEther(amount),
+        valueWei: amount.toString(),
+        status: 'Success',
+        timestamp: await blockTimestamp(provider, log.blockNumber, timestamps),
+        blockNumber: log.blockNumber
+      });
+    }
 
-    const merged = [...uniqueLocalTxs, ...fetchedTxs].sort((a, b) => b.timestamp - a.timestamp);
-    return merged;
+    const byHash = new Map();
+    for (const tx of [...localTxs, ...records]) {
+      if (tx?.hash) byHash.set(tx.hash.toLowerCase(), tx);
+    }
+
+    return [...byHash.values()].sort((a, b) => b.timestamp - a.timestamp);
   } catch (error) {
-    console.warn('Etherscan API fetch failed, falling back to local history:', error);
+    console.warn('RPC activity lookup failed; using local history:', error);
     return localTxs;
   }
 };

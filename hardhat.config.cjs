@@ -1,5 +1,20 @@
 require("@nomicfoundation/hardhat-toolbox");
 
+// Load local .env values without requiring dotenv as a runtime dependency.
+const fs = require("fs");
+const path = require("path");
+const envPath = path.join(process.cwd(), ".env");
+if (fs.existsSync(envPath)) {
+  for (const rawLine of fs.readFileSync(envPath, "utf8").split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#") || !line.includes("=")) continue;
+    const idx = line.indexOf("=");
+    const key = line.slice(0, idx).trim();
+    const value = line.slice(idx + 1).trim().replace(/^[\"]|[\"]$/g, "");
+    if (!process.env[key]) process.env[key] = value;
+  }
+}
+
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {

@@ -8,6 +8,7 @@ import { ArrowUpRight, RefreshCw, Wallet, ShieldCheck } from 'lucide-react';
 export const Dashboard = ({
   smartWallet,
   account,
+  provider,
   onConnect,
   onNavigate,
   onTriggerToast
@@ -18,14 +19,14 @@ export const Dashboard = ({
   const loadRecentActivity = useCallback(() => {
     if (account && smartWallet.smartWalletAddress) {
       setLoadingTxs(true);
-      fetchTransactionHistory(smartWallet.smartWalletAddress)
+      fetchTransactionHistory(smartWallet.smartWalletAddress, provider)
         .then(txs => setRecentTxs(txs.slice(0, 4)))
         .catch(err => console.error('Failed to fetch recent txs:', err))
         .finally(() => setLoadingTxs(false));
     } else {
       setRecentTxs([]);
     }
-  }, [account, smartWallet.smartWalletAddress]);
+  }, [account, smartWallet.smartWalletAddress, provider]);
 
   useEffect(() => {
     loadRecentActivity();

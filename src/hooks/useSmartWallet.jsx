@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getSmartWalletConfig } from '../config/walletConfig';
+import { getSmartWalletConfig, getFactoryConfig } from '../config/walletConfig';
 import { getEthBalance, getSmartWalletOwner, getSmartWalletNonce, inspectContractCapabilities } from '../services/walletService';
 import { executeSendEthFromSmartWallet } from '../services/transactionService';
 import { areAddressesEqual } from '../utils/address';
@@ -7,8 +7,44 @@ import { parseWeb3Error } from '../utils/errors';
 import { saveLocalTx } from '../services/etherscanService';
 
 export const useSmartWallet = (connectedEOA, signer, provider) => {
+  const getStoredWalletAddress = (owner) => {
+    if (!owner) return null;
+    try {
+      const raw = localStorage.getItem('smart_wallet_addresses');
+      const map = raw ? JSON.parse(raw) : {};
+      return map[owner.toLowerCase()] || null;
+    } catch {
+      return null;
+    }
+  };
+
   const config = getSmartWalletConfig();
-  const smartWalletAddress = config.address;
+  const factoryConfig = getFactoryConfig();
+  const getInitialWalletAddress = (owner) => {
+    const stored = getStoredWalletAddress(owner);
+    if (stored) return stored;
+    // Only use the legacy static address when Factory mode is not configured.
+    // This prevents a newly connected EOA from accidentally controlling another user's wallet.
+    return !factoryConfig.isConfigured && config.isConfigured ? config.address : null;
+  };
+  const [smartWalletAddress, setSmartWalletAddressState] = useState(() =>
+    getInitialWalletAddress(connectedEOA)
+  );
+
+  const setWalletAddress = useCallback((address) => {
+    if (!address) return;
+    setSmartWalletAddressState(address);
+    if (connectedEOA) {
+      try {
+        const raw = localStorage.getItem('smart_wallet_addresses');
+        const map = raw ? JSON.parse(raw) : {};
+        map[connectedEOA.toLowerCase()] = address;
+        localStorage.setItem('smart_wallet_addresses', JSON.stringify(map));
+      } catch (err) {
+        console.warn('Could not persist smart wallet address:', err);
+      }
+    }
+  }, [connectedEOA]);
 
   const [balance, setBalance] = useState(0n);
   const [ownerAddress, setOwnerAddress] = useState(null);
@@ -41,7 +77,7 @@ export const useSmartWallet = (connectedEOA, signer, provider) => {
 
   // Refresh Smart Wallet state
   const refreshData = useCallback(async () => {
-    if (!config.isConfigured || !connectedEOA) {
+    if (!smartWalletAddress || !connectedEOA) {
       setBalance(0n);
       setOwnerAddress(null);
       setNonce(0n);
@@ -70,7 +106,11 @@ export const useSmartWallet = (connectedEOA, signer, provider) => {
     } finally {
       setIsLoading(false);
     }
-  }, [config.isConfigured, connectedEOA, smartWalletAddress, provider]);
+  }, [connectedEOA, smartWalletAddress, provider]);
+
+  useEffect(() => {
+    setSmartWalletAddressState(getInitialWalletAddress(connectedEOA));
+  }, [connectedEOA, config.isConfigured, config.address, factoryConfig.isConfigured]);
 
   useEffect(() => {
     if (!connectedEOA) {
@@ -183,7 +223,8 @@ export const useSmartWallet = (connectedEOA, signer, provider) => {
 
   return {
     smartWalletAddress,
-    isConfigured: config.isConfigured,
+    setWalletAddress,
+    isConfigured: Boolean(smartWalletAddress),
     balance,
     ownerAddress,
     isOwnerConnected,

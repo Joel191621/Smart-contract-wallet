@@ -15,7 +15,8 @@ export const Send = ({ smartWallet, account, signer, isCorrectNetwork, onSwitchN
   const [showApprovalModal, setShowApprovalModal] = useState(false);
 
   const smartWalletBalanceEth = formatEth(smartWallet.balance);
-  const isNotDeployedContract = smartWallet.capabilities && !smartWallet.capabilities.isDeployed;
+  const isNotDeployedContract = Boolean(smartWallet.smartWalletAddress) && smartWallet.capabilities && !smartWallet.capabilities.isDeployed;
+  const hasSmartWallet = Boolean(smartWallet.smartWalletAddress) && Boolean(smartWallet.capabilities?.isDeployed);
 
   useEffect(() => {
     if (isValidAddress(recipient) && amountEth && parseFloat(amountEth) > 0 && signer && !isNotDeployedContract) {
@@ -52,8 +53,8 @@ export const Send = ({ smartWallet, account, signer, isCorrectNetwork, onSwitchN
       return;
     }
 
-    if (isNotDeployedContract) {
-      setValidationError(`Address ${shortenAddress(smartWallet.smartWalletAddress, 4)} in .env is an EOA (Personal Account), not a deployed Smart Contract.`);
+    if (!hasSmartWallet) {
+      setValidationError('Deploy your Smart Contract Wallet from the Deploy Wallet page before sending ETH.');
       return;
     }
 
@@ -128,10 +129,10 @@ export const Send = ({ smartWallet, account, signer, isCorrectNetwork, onSwitchN
         <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs space-y-2">
           <div className="flex items-center gap-2 font-bold text-amber-500">
             <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0" />
-            <span>Configured Address is an EOA (Personal Account)</span>
+            <span>Smart Wallet is not deployed</span>
           </div>
           <p className="text-[11px] leading-relaxed">
-            The address in your <code className="font-mono text-amber-500">.env</code> file (<code>{shortenAddress(smartWallet.smartWalletAddress, 4)}</code>) is a personal wallet address, not a deployed Smart Contract. Smart Wallet execution calls require a deployed contract address.
+            Deploy a Factory-created Smart Contract Wallet before attempting an outgoing transfer. The connected EOA is only used to authorize the transaction.
           </p>
         </div>
       )}
