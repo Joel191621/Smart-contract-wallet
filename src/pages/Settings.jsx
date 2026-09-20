@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Settings as SettingsIcon, ShieldCheck, KeyRound, Globe, ExternalLink, Cpu, CheckCircle2, RefreshCw, ArrowRightLeft, Wallet, Lock } from 'lucide-react';
 import { NETWORKS, PRIMARY_NETWORK } from '../config/networks';
 import { shortenAddress } from '../utils/address';
+import { UpgradeDashboard } from '../components/UpgradeDashboard';
 
 export const Settings = ({
   smartWallet,
   account,
   signer,
+  provider,
   chainId,
   isCorrectNetwork,
   onSwitchNetwork,
@@ -106,7 +108,7 @@ export const Settings = ({
           Wallet Settings & Configuration
         </h1>
         <p className="text-xs text-[var(--text-secondary)] mt-1">
-          Smart contract metadata, EOA authorization details, and network settings
+          Smart contract metadata, EOA authorization details, and UUPS upgrade management
         </p>
       </div>
 
@@ -121,13 +123,13 @@ export const Settings = ({
             </div>
             <div>
               <h3 className="text-sm font-bold text-[var(--text-primary)]">Smart Wallet Contract Info</h3>
-              <p className="text-[11px] text-[var(--text-secondary)]">Sepolia contract parameters</p>
+              <p className="text-[11px] text-[var(--text-secondary)]">Sepolia ERC1967 proxy parameters</p>
             </div>
           </div>
 
           <div className="space-y-2.5 text-xs bg-[var(--bg-card-subtle)] p-4 rounded-2xl border border-[var(--border-color)]">
             <div className="flex items-center justify-between">
-              <span className="text-[var(--text-secondary)]">Contract Address:</span>
+              <span className="text-[var(--text-secondary)]">Proxy Address:</span>
               <span className="font-mono text-cyan-500 font-bold">
                 {shortenAddress(smartWallet.smartWalletAddress, 6)}
               </span>
@@ -143,7 +145,7 @@ export const Settings = ({
             <div className="flex items-center justify-between pt-2 border-t border-[var(--border-color)]">
               <span className="text-[var(--text-secondary)]">Bytecode Status:</span>
               <span className="font-semibold text-emerald-500 flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Deployed
+                <CheckCircle2 className="w-3.5 h-3.5" /> Deployed Proxy
               </span>
             </div>
 
@@ -236,6 +238,17 @@ export const Settings = ({
           </div>
         </div>
       </div>
+
+      {/* Admin UUPS Upgrade Dashboard */}
+      <UpgradeDashboard
+        smartWalletAddress={smartWallet.smartWalletAddress}
+        account={account}
+        signer={signer}
+        provider={provider}
+        isOwnerConnected={smartWallet.isOwnerConnected}
+        onTriggerToast={onTriggerToast}
+        onUpgradeSuccess={smartWallet.refreshData}
+      />
 
       {/* Network Selector Card */}
       <div className="rounded-3xl glass-panel p-6 border border-[var(--border-color)] space-y-4">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, ArrowUpRight, ArrowDownLeft, Activity, Settings, LayoutDashboard, LogOut, Copy, Check, Wallet, Sun, Moon } from 'lucide-react';
+import { ShieldCheck, ArrowUpRight, ArrowDownLeft, Activity, Settings, LayoutDashboard, LogOut, Copy, Check, Wallet, Sun, Moon, Layers } from 'lucide-react';
 import { shortenAddress } from '../utils/address';
 import { PRIMARY_NETWORK } from '../config/networks';
 
@@ -33,6 +33,7 @@ export const Navbar = ({
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'deploy', label: 'Deploy Wallet', icon: Layers },
     { id: 'send', label: 'Send', icon: ArrowUpRight },
     { id: 'receive', label: 'Receive', icon: ArrowDownLeft },
     { id: 'activity', label: 'Activity', icon: Activity },
@@ -45,14 +46,14 @@ export const Navbar = ({
         <div className="flex items-center justify-between h-16 gap-4">
           
           {/* Minimal Brand Logo */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-md shadow-cyan-500/20">
               <ShieldCheck className="w-5 h-5 text-white" />
             </div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-base tracking-tight text-[var(--text-primary)]">Vault Sentinel</span>
               <span className="px-1.5 py-0.5 text-[9px] uppercase font-bold rounded bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">
-                Smart Wallet
+                Factory + Proxy
               </span>
             </div>
           </div>

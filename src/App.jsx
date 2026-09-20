@@ -7,12 +7,13 @@ import { Footer } from './components/Footer';
 import { Toast } from './components/Toast';
 
 import { Dashboard } from './pages/Dashboard';
+import { DeployWallet } from './pages/DeployWallet';
 import { Send } from './pages/Send';
 import { Receive } from './pages/Receive';
 import { ActivityPage } from './pages/Activity';
 import { Settings } from './pages/Settings';
 
-const THEME_STORAGE_KEY = 'aegis_vault_theme';
+const THEME_STORAGE_KEY = 'vault_sentinel_theme';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -67,6 +68,11 @@ export default function App() {
     showToast("Wallet Disconnected Successfully");
   };
 
+  const handleWalletDeployed = (deployedProxyAddress) => {
+    smartWallet.refreshData();
+    setActiveTab('dashboard');
+  };
+
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-300 ${theme === 'light' ? 'light bg-slate-50 text-slate-900' : 'bg-[#0B0F19] text-gray-100'}`}>
       
@@ -109,6 +115,17 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'deploy' && (
+          <DeployWallet
+            account={account}
+            signer={signer}
+            provider={provider}
+            onConnect={connect}
+            onTriggerToast={showToast}
+            onWalletDeployed={handleWalletDeployed}
+          />
+        )}
+
         {activeTab === 'send' && (
           <Send
             smartWallet={smartWallet}
@@ -144,6 +161,7 @@ export default function App() {
             smartWallet={smartWallet}
             account={account}
             signer={signer}
+            provider={provider}
             chainId={chainId}
             isCorrectNetwork={isCorrectNetwork}
             onSwitchNetwork={switchNetwork}
