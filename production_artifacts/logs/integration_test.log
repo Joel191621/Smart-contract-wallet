@@ -1,0 +1,52 @@
+==========================================================
+SMART WALLET FACTORY + PROXY INTEGRATION TEST
+==========================================================
+Timestamp: 2026-09-20T10:06:30.216Z
+Deployer Address: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+Owner Address: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+Recipient Address: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC
+
+--- Step 1: Deploying SmartWalletImplementation V1 ---
+V1 Implementation Deployed at: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+
+--- Step 2: Deploying WalletFactory ---
+WalletFactory Deployed at: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+
+--- Step 3: Predicting CREATE2 Smart Wallet Address ---
+Salt: 0x3afb9c7de9cb761955e611fbd56a536dd710c38f97ff92adcc422d0c0b881d2b
+Predicted Address: 0x2CC8F0A039964B5EcA594791E0912A5c7cb3c3bf
+
+--- Step 4: Executing createWallet via Factory ---
+Actual Deployed Proxy Address: 0x2CC8F0A039964B5EcA594791E0912A5c7cb3c3bf
+
+--- Step 5: Address Verification ---
+Predicted: 0x2CC8F0A039964B5EcA594791E0912A5c7cb3c3bf
+Actual:    0x2CC8F0A039964B5EcA594791E0912A5c7cb3c3bf
+SUCCESS: Predicted Address === Actual Deployed Proxy Address!
+
+--- Step 6: Verifying Wallet Owner & Initial State ---
+Wallet Owner: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+Wallet Version: v1
+
+--- Step 7: Deposit Test ETH into Proxy Wallet ---
+Balance After Deposit: 2.5 ETH
+
+--- Step 8: Execute ETH Transfer through Proxy Wallet ---
+Balance After Transfer: 2.0 ETH
+
+--- Step 9: Deploying SmartWalletImplementation V2 ---
+V2 Implementation Deployed at: 0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9
+
+--- Step 10: Executing Authorized UUPS Upgrade to V2 ---
+Upgrade Transaction Confirmed!
+
+--- Step 11: Verifying Post-Upgrade Integrity ---
+Proxy Address Unchanged: true
+New Version: v2
+isV2() Flag: true
+Owner Preserved: true
+Balance Preserved: 2.0 ETH
+
+==========================================================
+INTEGRATION TEST PASSED SUCCESSFULLY!
+==========================================================
