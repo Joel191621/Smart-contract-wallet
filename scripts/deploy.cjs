@@ -10,12 +10,17 @@ async function main() {
   const chainId = network.chainId.toString();
   console.log(`Target Network Chain ID: ${chainId}`);
 
-  const [deployer] = await ethers.getSigners();
-  console.log(`Deployer Address: ${deployer.address}`);
+  const signers = await ethers.getSigners();
+  if (!signers || signers.length === 0) {
+    throw new Error("No deployer signer available. Please configure PRIVATE_KEY in your .env file.");
+  }
+  const deployer = signers[0];
+  const deployerAddress = await deployer.getAddress();
+  console.log(`Deployer EOA Address: ${deployerAddress}`);
 
   // 1. Deploy SmartWalletImplementation V1
   console.log("\n1. Deploying SmartWalletImplementation V1...");
-  const ImplementationFactory = await ethers.getContractFactory("SmartWalletImplementation");
+  const ImplementationFactory = await ethers.getContractFactory("SmartWalletImplementation", deployer);
   const implementation = await ImplementationFactory.deploy();
   await implementation.waitForDeployment();
   const implAddress = await implementation.getAddress();
@@ -23,7 +28,7 @@ async function main() {
 
   // 2. Deploy WalletFactory
   console.log("\n2. Deploying WalletFactory...");
-  const FactoryContract = await ethers.getContractFactory("WalletFactory");
+  const FactoryContract = await ethers.getContractFactory("WalletFactory", deployer);
   const factory = await FactoryContract.deploy(implAddress);
   await factory.waitForDeployment();
   const factoryAddress = await factory.getAddress();
@@ -33,7 +38,7 @@ async function main() {
   console.log("DEPLOYMENT SUMMARY");
   console.log("==========================================================");
   console.log(`Chain ID:               ${chainId}`);
-  console.log(`Deployer EOA:           ${deployer.address}`);
+  console.log(`Deployer EOA:           ${deployerAddress}`);
   console.log(`Implementation (V1):    ${implAddress}`);
   console.log(`WalletFactory:          ${factoryAddress}`);
   console.log("==========================================================");
